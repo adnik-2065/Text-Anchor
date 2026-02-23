@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>TextAnchor</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="container" class="popup-card">
+      <header class="popup-header">
+        <h1 class="popup-title">TextAnchor</h1>
+        <p class="popup-subtitle">Save your place and jump back into reading anytime.</p>
+      </header>
+
+      <section class="status-section">
+        <div id="status" class="status status-info">Loading...</div>
+        <div id="markStatus" class="status status-muted">No mark set.</div>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="actions">
+        <button id="saveBtn" class="btn primary-btn" type="button">Save Position</button>
+        <button id="restoreBtn" class="btn secondary-btn" type="button">Restore Position</button>
+        <button id="markBtn" class="btn tertiary-btn" type="button">Mark Position</button>
+      </section>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
