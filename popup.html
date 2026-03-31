@@ -7,22 +7,56 @@
   </head>
   <body>
     <div id="container" class="popup-card">
+      <!-- Header -->
       <header class="popup-header">
-        <h1 class="popup-title">TextAnchor</h1>
-        <p class="popup-subtitle">Save your place and jump back into reading anytime.</p>
+        <div class="popup-logo">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="24" height="24" rx="6" fill="#22c55e"/>
+            <path d="M7 17V7h4.5a3 3 0 0 1 0 6H9.5v4" stroke="#0f1115" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="16" cy="15" r="2" fill="#0f1115"/>
+          </svg>
+        </div>
+        <div class="popup-header-text">
+          <h1 class="popup-title">TextAnchor</h1>
+          <p class="popup-subtitle">Save your place and jump back anytime</p>
+        </div>
       </header>
 
-      <section class="status-section">
-        <div id="status" class="status status-info">Loading...</div>
-        <div id="markStatus" class="status status-muted">No mark set.</div>
+      <!-- Status Section -->
+      <section class="status-card">
+        <div class="status-row">
+          <span class="status-dot status-dot--info"></span>
+          <span id="status" class="status-text">Loading...</span>
+        </div>
+        <div class="status-row">
+          <span class="status-dot status-dot--muted"></span>
+          <span id="markStatus" class="status-text status-text--muted">No mark set.</span>
+        </div>
       </section>
 
-      <div class="divider"></div>
-
+      <!-- Actions -->
       <section class="actions">
-        <button id="saveBtn" class="btn primary-btn" type="button">Save Position</button>
-        <button id="restoreBtn" class="btn secondary-btn" type="button">Restore Position</button>
-        <button id="markBtn" class="btn tertiary-btn" type="button">Mark Position</button>
+        <button id="markBtn" class="btn btn-primary" type="button">
+          <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20M2 12h20"/>
+          </svg>
+          Mark Position
+        </button>
+        <button id="restoreBtn" class="btn btn-secondary" type="button">
+          <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"/>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+          </svg>
+          Restore Position
+        </button>
+      </section>
+
+      <!-- Saved Articles -->
+      <section class="saved-section">
+        <h2 class="saved-heading">Saved Articles</h2>
+        <div id="savedList" class="saved-list">
+          <p class="saved-empty">No saved articles yet.</p>
+        </div>
       </section>
     </div>
 

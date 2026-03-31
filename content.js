@@ -2,6 +2,31 @@
   const DEBOUNCE_DELAY = 1000;
   let scrollTimeoutId = null;
 
+  // Cache the last known caret/selection so it survives popup focus steal
+  var cachedSelection = null;
+
+  function cacheCurrentSelection() {
+    var sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    var range = sel.getRangeAt(0);
+    var node = range.startContainer;
+    if (!node) return;
+    // Only cache if the caret is in a text node on the page
+    if (node.nodeType === Node.TEXT_NODE || node.nodeType === Node.ELEMENT_NODE) {
+      cachedSelection = {
+        node: node,
+        offset: range.startOffset
+      };
+    }
+  }
+
+  document.addEventListener("mouseup", function () {
+    setTimeout(cacheCurrentSelection, 0);
+  }, true);
+  document.addEventListener("keyup", function () {
+    setTimeout(cacheCurrentSelection, 0);
+  }, true);
+
   function getCleanUrl() {
     return window.location.origin + window.location.pathname;
   }
@@ -36,7 +61,10 @@
       const baseData = {
         scrollY,
         percentage,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        title: document.title || cleanURL,
+        url: window.location.href,
+        favicon: (document.querySelector('link[rel*="icon"]') || {}).href || (window.location.origin + '/favicon.ico')
       };
 
       chrome.storage.local.get(cleanURL, (result) => {
@@ -118,14 +146,25 @@
   }
 
   function getMarkerFromSelection() {
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) {
-      return null;
+    var sel = window.getSelection();
+    var startNode = null;
+    var startOffset = 0;
+
+    // Try live selection first
+    if (sel && sel.rangeCount > 0) {
+      var range = sel.getRangeAt(0);
+      startNode = range.startContainer;
+      startOffset = range.startOffset;
     }
 
-    const range = sel.getRangeAt(0);
-    const startNode = range.startContainer;
-    let startOffset = range.startOffset;
+    // Fallback to cached selection if live selection is empty/invalid
+    if (!startNode && cachedSelection && cachedSelection.node) {
+      // Verify the cached node is still in the document
+      if (document.contains(cachedSelection.node)) {
+        startNode = cachedSelection.node;
+        startOffset = cachedSelection.offset;
+      }
+    }
 
     if (!startNode) {
       return null;
@@ -152,9 +191,17 @@
       startOffset = 0;
     }
 
-    const rect = range.getBoundingClientRect();
-    const absoluteY = rect ? rect.top + (window.scrollY || window.pageYOffset || 0) : window.scrollY || 0;
-    const percentage = calculateProgress(absoluteY);
+    var absoluteY = 0;
+    try {
+      var tempRange = document.createRange();
+      tempRange.setStart(startNode, startOffset);
+      tempRange.setEnd(startNode, startOffset);
+      var rect = tempRange.getBoundingClientRect();
+      absoluteY = rect ? rect.top + (window.scrollY || window.pageYOffset || 0) : window.scrollY || 0;
+    } catch (e) {
+      absoluteY = window.scrollY || 0;
+    }
+    var percentage = calculateProgress(absoluteY);
 
     return {
       path,
@@ -164,43 +211,71 @@
     };
   }
 
-  function highlightRangeTemporarily(range) {
-    if (!range) {
-      return;
-    }
-
-    const highlight = document.createElement("span");
-    highlight.style.backgroundColor = "yellow";
-    highlight.style.padding = "0";
-    highlight.style.margin = "0";
-    highlight.style.borderRadius = "2px";
-    highlight.style.transition = "background-color 0.5s ease";
-
-    let applied = false;
+  function applyHighlight(node, offset) {
     try {
-      range.surroundContents(highlight);
-      applied = true;
+      if (!node || node.nodeType !== Node.TEXT_NODE) return;
+
+      var textLength = (node.textContent || "").length;
+      if (textLength === 0) return;
+
+      if (offset < 0) offset = 0;
+      if (offset >= textLength) offset = textLength - 1;
+
+      // Ensure the highlight spans the whole word, not just 1 invisible character/space
+      var text = node.textContent;
+      var start = offset;
+      var end = offset;
+      
+      while (start > 0 && /\S/.test(text[start - 1])) start--;
+      while (end < textLength && /\S/.test(text[end])) end++;
+      
+      // If purely whitespace, expand artificially so it is visible
+      if (start === end) {
+        start = Math.max(0, offset);
+        end = Math.min(textLength, offset + 4);
+      }
+
+      if (!document.getElementById("text-anchor-highlight-style")) {
+        var styleEl = document.createElement("style");
+        styleEl.id = "text-anchor-highlight-style";
+        styleEl.textContent =
+          ".text-anchor-highlight { background-color: rgba(255, 230, 0, 0.55) !important; color: black !important; border-radius: 3px !important; padding: 1px 2px !important; font-weight: bold !important; display: inline-block !important; box-shadow: 0 0 8px 2px rgba(255, 230, 0, 0.35) !important; transition: background-color 0.8s ease, box-shadow 0.8s ease, opacity 0.8s ease !important; }" +
+          ".text-anchor-highlight-fade { background-color: transparent !important; box-shadow: none !important; opacity: 0 !important; }";
+        document.head.appendChild(styleEl);
+      }
+
+      var range = document.createRange();
+      range.setStart(node, start);
+      range.setEnd(node, end);
+
+      var span = document.createElement("span");
+      span.className = "text-anchor-highlight";
+      // Inline styles as a fallback against strict Content Security Policies blocking injected <style> tags
+      span.style.cssText = "background-color: rgba(255, 230, 0, 0.55) !important; color: black !important; border-radius: 3px !important; padding: 1px 2px !important; font-weight: bold !important; box-shadow: 0 0 8px 2px rgba(255, 230, 0, 0.35) !important; transition: background-color 0.8s ease, box-shadow 0.8s ease, opacity 0.8s ease !important;";
+      
+      range.surroundContents(span);
+
+      // After 3s visible, trigger a smooth 0.8s fade-out, then clean up the DOM
+      setTimeout(function () {
+        if (span && span.parentNode) {
+          span.classList.add("text-anchor-highlight-fade");
+          span.style.backgroundColor = "transparent";
+          span.style.boxShadow = "none";
+          span.style.opacity = "0";
+
+          setTimeout(function () {
+            if (span && span.parentNode) {
+              var parent = span.parentNode;
+              span.replaceWith(document.createTextNode(span.textContent));
+              // normalization is extremely important to merge text nodes, otherwise future DOM paths break
+              parent.normalize();
+            }
+          }, 850);
+        }
+      }, 3000);
     } catch (e) {
-      applied = false;
+      // Exit silently
     }
-
-    if (!applied) {
-      return;
-    }
-
-    setTimeout(() => {
-      highlight.style.backgroundColor = "transparent";
-      setTimeout(() => {
-        const parent = highlight.parentNode;
-        if (!parent) {
-          return;
-        }
-        while (highlight.firstChild) {
-          parent.insertBefore(highlight.firstChild, highlight);
-        }
-        parent.removeChild(highlight);
-      }, 500);
-    }, 3000);
   }
 
   function restoreMarker(marker) {
@@ -208,55 +283,58 @@
       return false;
     }
 
-    const node = getNodeFromPath(marker.path);
+    var node = getNodeFromPath(marker.path);
     if (!node) {
       return false;
     }
 
-    const range = document.createRange();
+    var offset = typeof marker.offset === "number" ? marker.offset : 0;
+
+    var scrollTarget = 0;
     if (node.nodeType === Node.TEXT_NODE) {
-      const text = node.textContent || "";
-      const length = text.length;
-      if (length === 0) {
-        return false;
-      }
-      let start = typeof marker.offset === "number" ? marker.offset : 0;
-      if (start < 0) {
-        start = 0;
-      }
-      if (start >= length) {
-        start = length - 1;
-      }
-      const end = Math.min(start + 1, length);
+      var tempRange = document.createRange();
       try {
-        range.setStart(node, start);
-        range.setEnd(node, end);
+        var safeOffset = Math.min(offset, (node.textContent || "").length);
+        tempRange.setStart(node, safeOffset);
+        tempRange.setEnd(node, safeOffset);
+        var rect = tempRange.getBoundingClientRect();
+        scrollTarget = rect.top + (window.scrollY || window.pageYOffset || 0) - window.innerHeight * 0.3;
       } catch (e) {
-        return false;
+        scrollTarget = 0;
       }
     } else {
-      try {
-        range.selectNode(node);
-      } catch (e) {
-        return false;
+      var nodeRect = node.getBoundingClientRect ? node.getBoundingClientRect() : null;
+      if (nodeRect) {
+        scrollTarget = nodeRect.top + (window.scrollY || window.pageYOffset || 0) - window.innerHeight * 0.3;
       }
     }
 
-    const rect = range.getBoundingClientRect();
-    if (!rect) {
-      return false;
-    }
-
-    const absoluteY = rect.top + (window.scrollY || window.pageYOffset || 0);
-    const targetY = absoluteY - window.innerHeight * 0.3;
+    if (scrollTarget < 0) scrollTarget = 0;
 
     window.scrollTo({
-      top: targetY < 0 ? 0 : targetY,
+      top: scrollTarget,
       left: 0,
       behavior: "smooth"
     });
 
-    highlightRangeTemporarily(range);
+    var savedPath = marker.path.slice();
+    var savedOffset = offset;
+
+    setTimeout(function () {
+      var freshNode = getNodeFromPath(savedPath);
+      if (!freshNode) return;
+
+      if (freshNode.nodeType === Node.TEXT_NODE) {
+        applyHighlight(freshNode, savedOffset);
+      } else {
+        var walker = document.createTreeWalker(freshNode, NodeFilter.SHOW_TEXT, null, false);
+        var firstText = walker.nextNode();
+        if (firstText) {
+          applyHighlight(firstText, 0);
+        }
+      }
+    }, 600);
+
     return true;
   }
 
@@ -272,7 +350,12 @@
 
       chrome.storage.local.get(cleanURL, (result) => {
         const existing = result[cleanURL] || {};
-        const data = Object.assign({}, existing, { marker: markerInfo });
+        const data = Object.assign({}, existing, {
+          marker: markerInfo,
+          title: document.title || cleanURL,
+          url: window.location.href,
+          favicon: (document.querySelector('link[rel*="icon"]') || {}).href || (window.location.origin + '/favicon.ico')
+        });
 
         chrome.storage.local.set({ [cleanURL]: data }, () => {
           resolve(data);
@@ -310,17 +393,6 @@
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!message || !message.type) {
       return;
-    }
-
-    if (message.type === "SAVE_POSITION") {
-      savePosition()
-        .then((data) => {
-          sendResponse({ success: true, data });
-        })
-        .catch((error) => {
-          sendResponse({ success: false, error: error && error.message });
-        });
-      return true;
     }
 
     if (message.type === "RESTORE_POSITION") {

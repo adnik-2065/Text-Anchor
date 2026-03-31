@@ -1,157 +1,154 @@
-# TextAnchor
+<div align="center">
 
-Save and return to the exact word where you stopped reading on any article or blog page.
+# ⚓ TextAnchor
 
-TextAnchor is a Chrome extension that lets you drop a precise reading anchor in the text using your caret (text cursor). When you come back to the same page, the extension scrolls you back to that exact spot and briefly highlights it so you can resume reading instantly.
+### *Never lose your place again.*
 
-## Features
+A Chrome extension that bookmarks the **exact word** where you stopped reading — and brings you right back to it.
 
-- **Precise text anchors**: Mark the exact word/character using the text cursor and a single click.
-- **Automatic restore**: When you revisit the same page, TextAnchor scrolls back to the saved position.
-- **Temporary highlight**: The saved word/character is highlighted for a few seconds when restored.
-- **Per‑page storage**: Anchors are stored per normalized URL using Chrome's `chrome.storage.local`.
-- **Simple popup UI**: Quickly mark, save, and restore your reading state from the extension popup.
+[![Chrome Extension](https://img.shields.io/badge/Platform-Chrome%20Extension-4285F4?logo=googlechrome&logoColor=white)](https://developer.chrome.com/docs/extensions/)
+[![Manifest V3](https://img.shields.io/badge/Manifest-V3-34A853?logo=googlechrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/intro/)
+[![JavaScript](https://img.shields.io/badge/Built%20with-JavaScript-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## Installation (Load Unpacked in Chrome)
+---
 
-1. **Download or clone** this project to your computer.
-2. Open Chrome and go to `chrome://extensions`.
-3. Turn on **Developer mode** (toggle in the top-right corner).
-4. Click **“Load unpacked”**.
-5. Select the project folder (for you, this is typically:  
-   `/home/nik/Desktop/Projects/Project-k`).
-6. You should now see **TextAnchor** in the list of extensions and its icon in the toolbar.
+**Reading a long article?** Place your cursor on the exact word where you stopped, click **Mark Position**, and walk away.  
+When you come back — even days later — TextAnchor scrolls to that exact spot and highlights it so you can pick up right where you left off.
 
-## Usage
+</div>
 
-1. Open any article or blog page you want to read.
-2. Read until you want to stop.
-3. Place the **text cursor (caret)** at the exact word/character where you stop.
-4. Click the **TextAnchor** icon in the Chrome toolbar to open the popup.
-5. Click **“Mark Position”** in the popup to save that text anchor.
-6. Later, when you revisit the same page:
-   - The extension will automatically scroll to your saved anchor.
-   - The anchored word/character will be briefly highlighted so you can easily spot it.
+---
 
-You can also use the **Save Position** / **Restore Position** buttons to work with scroll‑based positions if you prefer.
+## ✨ Features
 
-## Screenshots
+| Feature | Description |
+|---------|-------------|
+| 🎯 **Precise Text Anchors** | Marks the exact word/character using the browser's text cursor — not just a scroll position |
+| 🔄 **Auto-Restore** | Automatically scrolls back to your saved anchor when you revisit a page |
+| 💡 **Temporary Highlight** | Briefly highlights the anchored word so you can spot it instantly |
+| 🔗 **Per-Page Storage** | Each page gets its own saved reading position — anchors never collide |
+| 💾 **URL Saving** | Automatically saves and manages URLs of your bookmarked articles |
+| 📚 **Saved Articles** | Automatically saves a list of bookmarked pages so you can easily return to them from the popup |
+| 📊 **Reading Progress** | Tracks and displays how far through the page you've read (percentage) |
+| 🖱️ **Scroll Position Fallback** | Also saves scroll-based positions as a secondary restore method |
+| 🌙 **Dark Mode UI** | Sleek dark-themed popup that adapts to your system preference |
 
-> _Add screenshots here once you capture them._
->
-> Suggested screenshots:
-> - Popup UI (TextAnchor window)
-> - Example page before marking
-> - Example page after restore with highlighted text
+---
 
-## Tech Stack
+## 🚀 How It Works
 
-- **Platform**: Chrome Extension (Manifest V3)
-- **Languages**: HTML, CSS, JavaScript (vanilla)
-- **APIs**:
-  - `chrome.storage.local` for per‑page anchor storage
-  - `chrome.tabs` and `chrome.runtime` for messaging
-  - `window.getSelection()` and `Range` API for caret‑based anchors
-
-## Project Structure
-
-- `manifest.json` – Extension configuration (permissions, scripts, icons, etc.).
-- `background.js` – Background service worker for lifecycle events.
-- `content.js` – Content script that reads/writes anchors and scrolls/highlights on the page.
-- `popup.html` – Mark/restore UI layout.
-- `popup.js` – Popup behavior and messaging with the content script.
-- `styles.css` – Popup styling.
-- `icons/` – Extension icons (toolbar and Chrome Web UI).
-
-## Git & GitHub: Step‑by‑Step Guide
-
-The commands below assume your project folder is:
-
-```bash
-/home/nik/Desktop/Projects/Project-k
+```
+1. Read an article or blog post
+2. Stop at any word → place your text cursor there
+3. Click TextAnchor icon → "Mark Position"
+4. Come back anytime → auto-restored & highlighted ✨
 ```
 
-### 1. Initialize a local git repository
+Under the hood, TextAnchor uses the browser's **Selection & Range API** to build a DOM path to the exact text node and character offset where your cursor sits. This path is saved to `chrome.storage.local` keyed by the page URL, so every page has its own independent anchor. On revisit, the extension walks the DOM path, scrolls to the node, and wraps the character in a temporary highlight that fades out after 3 seconds.
 
-Open a terminal and run:
+---
 
-```bash
-cd /home/nik/Desktop/Projects/Project-k
-git init
+## 📦 Installation
+
+> **Note:** TextAnchor is not yet on the Chrome Web Store. Install it locally with these steps:
+
+1. **Clone** this repository:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/TextAnchor.git
+   ```
+
+2. Open Chrome and navigate to **`chrome://extensions`**
+
+3. Enable **Developer Mode** (toggle in the top-right corner)
+
+4. Click **"Load unpacked"**
+
+5. Select the cloned project folder
+
+6. ✅ TextAnchor should now appear in your extensions toolbar!
+
+---
+
+## 📖 Usage
+
+| Action | How |
+|--------|-----|
+| **Mark your position** | Place cursor on a word → click TextAnchor icon → **Mark Position** |
+| **Save scroll position** | Click TextAnchor icon → **Save Position** (saves scroll-based position) |
+| **Restore manually** | Click TextAnchor icon → **Restore Position** |
+| **Auto-restore** | Just revisit the page — it happens automatically |
+
+### Popup UI
+
+The popup shows:
+- 📊 Your saved **reading progress** (percentage + timestamp)
+- 📌 Your **marked position** (percentage + timestamp)
+- Three action buttons: **Save**, **Restore**, and **Mark**
+- 💾 **URL Saving** integration directly via the popup
+- 📚 A list of your **Saved Articles** to quickly jump back in
+
+---
+
+## 🛠️ Tech Stack
+
+- **Platform** — Chrome Extension (Manifest V3)
+- **Language** — Vanilla JavaScript, HTML, CSS
+- **Storage** — `chrome.storage.local` for per-page anchor persistence
+- **APIs** — `window.getSelection()`, `Range`, `chrome.tabs`, `chrome.runtime`
+
+---
+
+## 📁 Project Structure
+
+```
+TextAnchor/
+├── manifest.json      # Extension config — permissions, scripts, icons
+├── background.js      # Service worker for extension lifecycle
+├── content.js         # Core logic — anchor creation, restore, highlight
+├── popup.html         # Popup UI layout
+├── popup.js           # Popup behavior & messaging with content script
+├── styles.css         # Popup styling (dark mode support)
+└── icons/
+    ├── icon16.png     # Toolbar icon (16×16)
+    ├── icon32.png     # Toolbar icon (32×32)
+    ├── icon48.png     # Extension page icon (48×48)
+    ├── icon128.png    # Chrome Web Store icon (128×128)
+    └── icon_updated.jpg # Active extension icon
 ```
 
-- `git init` turns the current folder into a new git repository.
+---
 
-### 2. See which files will be tracked
+## 🤝 Contributing
 
-```bash
-git status
-```
+Contributions are welcome! Here's how:
 
-- This shows all untracked files (in red) that git sees in the folder.
+1. **Fork** this repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m "Add amazing feature"`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a **Pull Request**
 
-### 3. Add all project files to git
+### Ideas for Contribution
 
-```bash
-git add .
-```
+- [ ] Sync anchors across devices using `chrome.storage.sync`
+- [ ] Add keyboard shortcut to mark position (e.g., `Ctrl+Shift+M`)
+- [ ] Support for multiple anchors per page
+- [ ] Export/import reading history
+- [ ] Chrome Web Store listing
 
-- `git add .` stages all files (except those ignored by `.gitignore`) for commit.
+---
 
-### 4. Create your first commit
+## 📄 License
 
-```bash
-git commit -m "Initial commit: TextAnchor Chrome extension"
-```
+This project is licensed under the [MIT License](LICENSE).
 
-- This takes a snapshot of the current project state with a descriptive message.
+---
 
-### 5. Create a new repository on GitHub
+<div align="center">
 
-1. Go to `https://github.com` in your browser and log in.
-2. Click the **“+”** button in the top-right corner and choose **“New repository”**.
-3. Set the **Repository name** to something like `textanchor` (or your preferred name).
-4. Choose **Public** or **Private** according to your needs.
-5. **Do not** add a README, `.gitignore`, or license from GitHub (you already have them locally).
-6. Click **“Create repository”**.
+**Built with ❤️ for avid readers who hate losing their place.**
 
-On the next page, GitHub will show you the repository URL. For HTTPS it will look like:
+⭐ Star this repo if you find it useful!
 
-```text
-https://github.com/YOUR_GITHUB_USERNAME/textanchor.git
-```
-
-### 6. Connect your local repo to GitHub
-
-Back in your terminal (still in the project folder), add the remote:
-
-```bash
-git branch -M main
-git remote add origin https://github.com/YOUR_GITHUB_USERNAME/textanchor.git
-```
-
-- `git branch -M main` ensures your main branch is called `main`.
-- `git remote add origin ...` tells git where the GitHub repo lives.
-
-### 7. Push your code to GitHub
-
-```bash
-git push -u origin main
-```
-
-- The first push may prompt you to log in to GitHub or use a personal access token.
-- `-u` sets `origin main` as the default so future pushes can be just `git push`.
-
-### 8. Updating your repo later
-
-Whenever you make changes to TextAnchor:
-
-```bash
-git status               # See what changed
-git add .                # Stage changes
-git commit -m "Describe what you changed"
-git push                 # Upload to GitHub
-```
-
-Your project is now version‑controlled and backed up on GitHub.
-
+</div>
