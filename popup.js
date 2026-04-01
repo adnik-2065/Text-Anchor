@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const statusEl = document.getElementById("status");
   const restoreBtn = document.getElementById("restoreBtn");
   const markBtn = document.getElementById("markBtn");
+  const removeBtn = document.getElementById("removeBtn");
   const markStatusEl = document.getElementById("markStatus");
 
   function setStatus(text) {
@@ -128,6 +129,22 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         setStatus("Marked current position.");
         refreshStatus();
+        loadSavedArticles();
+      });
+    });
+  }
+
+  if (removeBtn) {
+    removeBtn.addEventListener("click", () => {
+      setStatus("Removing...");
+      sendMessageToActiveTab({ type: "REMOVE_POSITION" }, (response) => {
+        if (!response || !response.success) {
+          setStatus("Failed to remove position.");
+          return;
+        }
+        setStatus("Position removed.");
+        refreshStatus();
+        loadSavedArticles();
       });
     });
   }

@@ -1,7 +1,4 @@
 (function () {
-  const DEBOUNCE_DELAY = 1000;
-  let scrollTimeoutId = null;
-
   // Cache the last known caret/selection so it survives popup focus steal
   var cachedSelection = null;
 
@@ -364,17 +361,6 @@
     });
   }
 
-  function handleScroll() {
-    if (scrollTimeoutId !== null) {
-      clearTimeout(scrollTimeoutId);
-    }
-
-    scrollTimeoutId = setTimeout(() => {
-      savePosition();
-      scrollTimeoutId = null;
-    }, DEBOUNCE_DELAY);
-  }
-
   function autoRestoreOnLoad() {
     setTimeout(() => {
       getSavedData().then((data) => {
@@ -396,13 +382,25 @@
     }
 
     if (message.type === "RESTORE_POSITION") {
-      restorePosition({ smooth: true })
-        .then((result) => {
-          sendResponse({ success: true, ...result });
-        })
-        .catch((error) => {
-          sendResponse({ success: false, error: error && error.message });
-        });
+      getSavedData().then((data) => {
+        if (data && data.marker) {
+          const ok = restoreMarker(data.marker);
+          if (ok) {
+            sendResponse({ success: true, restored: true, data });
+            return;
+          }
+        }
+        
+        restorePosition({ smooth: true })
+          .then((result) => {
+            sendResponse({ success: true, ...result });
+          })
+          .catch((error) => {
+            sendResponse({ success: false, error: error && error.message });
+          });
+      }).catch((error) => {
+        sendResponse({ success: false, error: error && error.message });
+      });
       return true;
     }
 
@@ -414,6 +412,14 @@
         .catch((error) => {
           sendResponse({ success: false, error: error && error.message });
         });
+      return true;
+    }
+
+    if (message.type === "REMOVE_POSITION") {
+      const cleanURL = getCleanUrl();
+      chrome.storage.local.remove(cleanURL, () => {
+        sendResponse({ success: true });
+      });
       return true;
     }
 
@@ -433,6 +439,5 @@
     }
   });
 
-  window.addEventListener("scroll", handleScroll, { passive: true });
   window.addEventListener("load", autoRestoreOnLoad);
 })();

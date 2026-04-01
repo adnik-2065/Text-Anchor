@@ -239,6 +239,28 @@ body {
   outline-offset: 2px;
 }
 
+/* Danger — Outlined Red */
+.btn-danger {
+  background-color: var(--bg-card);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.btn-danger:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  transform: translateY(-1px);
+}
+
+.btn-danger:active {
+  transform: scale(0.98) translateY(0);
+}
+
+.btn-danger:focus-visible {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+}
+
 /* ── Saved Articles ───────────────────────────────────────────────────── */
 .saved-section {
   display: flex;
